@@ -1,0 +1,5 @@
+A python tool for automatically generating a module containing datetime.tzinfo
+objects for most major timezones. The data source is the zoneinfo database
+provided by IANA here:
+
+http://www.iana.org/time-zones
