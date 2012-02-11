@@ -28,21 +28,21 @@ from datetime import datetime
 import re
 
 LAST_ZONE_SENT = '__last_processed_zone__'
-zone_re = re.compile(r'''\A(Zone)
-                         \s([a-zA-Z0-9/_]+)
-                         \s?([a-zA-Z]*)
-                         \s(\ ?[\d:-]+)
-                         \s(.+)
-                         \s(.+)
-                         \s?
-                         (.+)?''', re.X)
-cont_re = re.compile(r'\t\t\t( ?[\d:-]+)\s(.+)\s(.+)\s?(.+)?')
+zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_-]+)\s+([\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
+zone_cont_re = re.compile(r'\A( ?[\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
+link_re = re.compile(r'\A(Link)\s([a-zA-Z0-9/_]+)\s([a-zA-Z0-9/_]+)$')
+rule_re = re.compile(r'\A(Rule)\s(\w+)\s(\d+)\s(\d{4}|max|only)\s(.+)\s(\w+)\s(.+)\s([\d:-u]+)\s([\d:-u]+)\s(\w+)$')
 
 class ParseError(Exception):
     pass
 
 def parse_rule(line, rules):
-    parts = line.split("\t")
+    match = rule_re.match(line)
+
+    if not match:
+        raise ParseError("Unable to parse rule: %r" % (line,))
+
+    parts = match.groups()
 
     if parts[0] != "Rule":
         raise ParseError("parse mismatch, expecting 'Rule', got %r" % (parts[0],))
@@ -74,7 +74,7 @@ def parse_rule(line, rules):
 def parse_zone(line, zones):
 
     if not line.startswith("Zone"):
-        match = cont_re.match(line)
+        match = zone_cont_re.match(line)
 
         if not match:
             raise ParseError("Unable to parse continuation line: %r" % (line,))
@@ -84,7 +84,7 @@ def parse_zone(line, zones):
                   "gmtoff": parts[0],
                   "rules": parts[1],
                   "format": parts[2],
-                  "until": parts[3] if match.lastindex == 3 else '',
+                  "until": parts[3],
                  }
 
         this_zone = zones[LAST_ZONE_SENT]
@@ -103,7 +103,7 @@ def parse_zone(line, zones):
                                  {"gmtoff": parts[2],
                                   "rules": parts[3],
                                   "format": parts[4],
-                                  "until": parts[5] if match.lastindex == 5 else '',
+                                  "until": parts[5],
                                  },
                                 ],
                     }
@@ -120,7 +120,12 @@ def parse_zone(line, zones):
 
 
 def parse_link(line, links):
-    parts = line.split("\t")
+    match = link_re.match(line)
+
+    if not match:
+        raise ParseError("Unable to parse link line: %r" % (line,))
+
+    parts = match.groups()
 
     if parts[0] != "Link":
         raise ParseError("parse mismatch, expecting 'Link', got %r" % (parts[0],))
