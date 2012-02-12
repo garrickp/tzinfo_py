@@ -64,22 +64,26 @@ import re
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 INDENT = '    '
 
+# TODO Clean up to attempt to match PEP8
+
 class CompileError(Exception):
     pass
 
+# TODO Get this into some kind of common module - too much code duplication
 class ASO(object):
     pass
 class RuleSet(ASO):
     def __init__(self, n):
         self.name = n
-        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', "''")]
+        self.initial_assignments = [Assignment('s', None), Assignment('l', None)]
         self.rule_elements = []
 
     def render(self, level=0):
+        yield('\n')
         yield(INDENT * level)
         yield('def __')
         yield(self.name)
-        yield('(dt):\n')
+        yield('(dt):')
         for a in self.initial_assignments:
             for x in a.render(level + 1):
                 yield(x)
@@ -87,6 +91,8 @@ class RuleSet(ASO):
             for x in r_ele.render(level + 1):
                 yield(x)
         yield('\n')
+        yield(INDENT * (level + 1))
+        yield('return (s, l)')
 
 class RuleElement(ASO):
     def __init__(self):
@@ -94,6 +100,7 @@ class RuleElement(ASO):
         self.assignments = []
 
     def render(self, level=0):
+        yield('\n')
         yield(INDENT * level)
         yield('if ')
         first=True
@@ -106,11 +113,10 @@ class RuleElement(ASO):
                 yield x
         if first:
             yield('True')
-        yield(':\n')
+        yield(':')
         for a in self.assignments:
             for x in a.render(level + 1):
                 yield x
-        yield('\n')
 
 class Assignment(ASO):
     def __init__(self, n, v):
@@ -118,6 +124,7 @@ class Assignment(ASO):
         self.value = v
 
     def render(self, level=0):
+        yield('\n')
         yield(INDENT * level)
         yield(self.name)
         yield(' = ')
@@ -126,7 +133,6 @@ class Assignment(ASO):
                 yield(x)
         else:
             yield(repr(self.value))
-        yield('\n')
 
 class Condition(ASO):
     def __init__(self, n, o, v):
@@ -180,64 +186,94 @@ class FuncCall(ASO):
                 yield(repr(v))
         yield(')')
 
+class Identifier(ASO):
+    def __init__(self, n):
+        self.name = n
+
+    def render(self, level=0):
+        yield(self.name)
+
 def compile(rules):
     all_rulesets = {}
-    for rule in rules:
-        r_ele = RuleElement()
-        try:
-            if rule['to'] == 'only':
-                r_ele.conditions.append(Condition('dt.year', '==', int(rule['from'])))
-            elif rule['to'] == 'max':
-                r_ele.conditions.append(Condition('dt.year', '>=', int(rule['from'])))
+    for _, rule_list in rules.items():
+        for rule in rule_list:
+            # TODO Get logic for all the re.match and ints out of here and
+            #      into parse
+            r_ele = RuleElement()
+            try:
+                # Fix for systemV rule entry
+                if rule['from'] == 'min':
+                    from_yr = 0
+                else:
+                    from_yr = int(rule['from'])
+
+                if rule['to'] == 'only':
+                    r_ele.conditions.append(Condition('dt.year', '==', from_yr))
+                elif rule['to'] == 'max':
+                    r_ele.conditions.append(Condition('dt.year', '>=', from_yr))
+                else:
+                    r_ele.conditions.append(Condition('dt.year', '>=', from_yr))
+                    r_ele.conditions.append(Condition('dt.year', '<=', int(rule['to'])))
+            except ValueError:
+                raise CompileError("Problem creating condition for 'from %r to %r'"
+                                   % (rule['from'], rule['to']))
+
+            try:
+                in_mo = MONTHS.index(rule['in']) + 1
+            except ValueError:
+                raise CompileError("Not able to index month %r" % (rule['in'],))
+
+            try:
+                on_day = int(rule['on'])
+            except ValueError:
+                on_day = None
+
+            try:
+                at_h_m = re.match(r'(\d+):?(\d+)?', rule['at']).groups()
+                at_hour = int(at_h_m[0])
+                at_min = int(at_h_m[1]) if at_h_m[1] else 0
+            except AttributeError:
+                raise CompileError("unable to turn %r to hours:minutes" % (rule['at'],))
+
+            if on_day:
+                f_call = FuncCall('datetime', Identifier('dt.year'), in_mo, on_day, int(at_hour), int(at_min))
             else:
-                r_ele.conditions.append(Condition('dt.year', '>=', int(rule['from'])))
-                r_ele.conditions.append(Condition('dt.year', '<=', int(rule['to'])))
-        except ValueError:
-            raise CompileError("Problem creation condition for 'from %r to %r'"
-                               % (rule['from'], rule['to']))
+                if any([x in rule['on'] for x in ('=','>','<')]):
+                    try:
+                        f_name, d = re.match(r'( ?[a-zA-Z<>=]+)(\d+)', rule['on']).groups()
+                        d = int(d)
+                    except Exception:
+                        raise CompileError("Problem extracting day from %r" % (rule['on'],))
+                    f_name = f_name.replace('>', 'Gt')
+                    f_name = f_name.replace('<', 'Lt')
+                    f_name = f_name.replace('=', 'Eq')
+                    f_call = FuncCall('__' + f_name, Identifier('dt.year'), in_mo, d, int(at_hour), int(at_min))
+                else:
+                    f_call = FuncCall('__' + rule['on'], Identifier('dt.year'), in_mo, int(at_hour), int(at_min))
+            r_ele.conditions.append(Condition('dt', '>=', f_call))
 
-        try:
-            in_mo = MONTHS.index(rule['in']) + 1
-        except ValueError:
-            raise CompileError("Not able to index month %r" % (rule['in'],))
+            r_ele.assignments.append(Assignment('l', "%s" % (rule['letter'],)))
+            try:
+                off_h_m_s = re.match(r'(-)?(\d+):?(\d+)?:?(\d+)?', rule['save']).groups()
+                neg = bool(off_h_m_s[0])
+                h = int(off_h_m_s[1])
+                m = int(off_h_m_s[2]) if off_h_m_s[2] else 0
+                s = int(off_h_m_s[3]) if off_h_m_s[3] else 0
+            except AttributeError:
+                raise CompileError("unable to convert save: %r" % (rule['save'],))
+            if neg:
+                h = -h
+                m = -m
+                s = -s
+            r_ele.assignments.append(Assignment('s', FuncCall('timedelta', hours=h, minutes=m, seconds=s)))
 
-        try:
-            on_day = int(rule['on'])
-        except ValueError:
-            on_day = None
-
-        try:
-            at_h_m = re.match(r'(\d+):(\d+)', rule['at']).groups()
-        except AttributeError:
-            raise CompileError("unable to turn %r to hours:minutes" % (rule['at'],))
-
-        if on_day:
-            f_call = FuncCall('datetime', 'dt.year', in_mo, on_day, at_h_m[0], at_h_m[1])
-        else:
-            if '=' in rule['on'] or '>' in rule['on']:
-                try:
-                    d = re.match(r'Sun>=(\d+)', rule['on']).groups()[0]
-                    d = int(d)
-                except Exception:
-                    raise CompileError("Problem extracting day from %r" % (rule['on'],))
-                f_call = FuncCall('__sunGtEq', 'dt.year', in_mo, d, at_h_m[0], at_h_m[1])
+            if rule['name'] in all_rulesets:
+                r_set = all_rulesets[rule['name']]
             else:
-                f_call = FuncCall('__' + rule['on'], 'dt.year', in_mo, at_h_m[0], at_h_m[1])
-        r_ele.conditions.append(Condition('dt', '>=', f_call))
+                r_set = RuleSet(rule['name'])
 
-        r_ele.assignments.append('l', "'%s'" % (rule['letter'],))
-        try:
-            off_h_m_s = re.match(r'(\d+):(\d+):?(\d+)?', rule['save']).groups()
-        except AttributeError:
-            raise CompileError("unable to convert save: %r" % (rule['save'],))
-        r_ele.assignments.append('s', 'timedelta(hours=%s, minutes=%s, seconds=%s)' % off_h_m_s)
-
-        if rule['name'] in all_rulesets:
-            r_set = all_rulesets[rule['name']]
-        else:
-            r_set = RuleSet(rule['name'])
-
-        all_rulesets[rule['name']] = r_set
+            r_set.rule_elements.append(r_ele)
+            all_rulesets[rule['name']] = r_set
 
     return all_rulesets
 

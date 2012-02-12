@@ -28,10 +28,10 @@ from datetime import datetime
 import re
 
 LAST_ZONE_SENT = '__last_processed_zone__'
-zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_-]+)\s+([\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
+zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_+\-]+)\s+([\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
 zone_cont_re = re.compile(r'\A( ?[\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
-link_re = re.compile(r'\A(Link)\s([a-zA-Z0-9/_]+)\s([a-zA-Z0-9/_]+)$')
-rule_re = re.compile(r'\A(Rule)\s(\w+)\s(\d+)\s(\d{4}|max|only)\s(.+)\s(\w+)\s(.+)\s([\d:-u]+)\s([\d:-u]+)\s(\w+)$')
+link_re = re.compile(r'\A(Link)\s([a-zA-Z0-9/_+\-]+)\s+([a-zA-Z0-9/_+\-]+)$')
+rule_re = re.compile(r'\A(Rule)\s([\w-]+)\s(\d+|min)\s(\d{4}|max|only)\s(.+)\s(\w+)\s(.+)\s([\w:-]+)\s([\w:-]+)\s([\w-]+)$')
 
 class ParseError(Exception):
     pass
@@ -112,11 +112,7 @@ def parse_zone(line, zones):
 
     zones[LAST_ZONE_SENT] = this_zone
 
-    try:
-        zones[name].append(this_zone)
-
-    except KeyError:
-        zones[name] = [this_zone]
+    zones[name] = this_zone
 
 
 def parse_link(line, links):
@@ -132,8 +128,8 @@ def parse_link(line, links):
 
     try:
         this_link = {
-                     "from":    parts[1],
-                     "to":      parts[2],
+                     "to":    parts[1],
+                     "from":      parts[2],
                     }
 
     except IndexError:
@@ -141,16 +137,9 @@ def parse_link(line, links):
 
     name = this_link['from']
 
-    try:
-        links[name].append(this_link)
+    links[name] = this_link
 
-    except KeyError:
-        links[name] = [this_link]
-
-def parse(f_path):
-    zones = {}
-    rules = {}
-    links = {}
+def parse(f_path, zones={}, rules={}, links={}):
 
     try:
         with open(f_path, 'r') as zi_file:
