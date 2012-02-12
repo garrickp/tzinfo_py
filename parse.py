@@ -28,7 +28,7 @@ from datetime import datetime
 import re
 
 LAST_ZONE_SENT = '__last_processed_zone__'
-zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_+\-]+)\s+([\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
+zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_+\-]+)\s+([\d:-]+)\s([\w-]+)\s"?(.+)"?\s?(.+)?$')
 zone_cont_re = re.compile(r'\A( ?[\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
 link_re = re.compile(r'\A(Link)\s([a-zA-Z0-9/_+\-]+)\s+([a-zA-Z0-9/_+\-]+)$')
 rule_re = re.compile(r'\A(Rule)\s([\w-]+)\s(\d+|min)\s(\d{4}|max|only)\s(.+)\s(\w+)\s(.+)\s([\w:-]+)\s([\w:-]+)\s([\w-]+)$')

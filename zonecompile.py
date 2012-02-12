@@ -85,6 +85,9 @@ import re
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 INDENT = '    '
 
+def name_to_identifier(name):
+    return name.replace('/', '_').replace('-', '_').replace('+', 'plus')
+
 class CompileError(Exception):
     pass
 
@@ -94,7 +97,7 @@ class ASO(object):
 class Zone(ASO):
     def __init__(self, n):
         self.name = n
-        self.code_name = n.replace('/', '_').replace('-', '_').replace('+', 'plus')
+        self.code_name = name_to_identifier(n)
         self.offsets = []
 
     def render(self, level=0):
@@ -278,7 +281,7 @@ def compile(zones):
             if not rule or rule == '-':
                 rule_name = None
             else:
-                rule_name = '__' + rule
+                rule_name = '__' + name_to_identifier(rule)
 
             o_obj.assignments.append(Assignment('rule', Identifier(rule_name)))
 

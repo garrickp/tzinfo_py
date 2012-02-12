@@ -64,6 +64,9 @@ import re
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 INDENT = '    '
 
+def name_to_identifier(name):
+    return name.replace('/', '_').replace('-', '_').replace('+', 'plus')
+
 # TODO Clean up to attempt to match PEP8
 
 class CompileError(Exception):
@@ -75,6 +78,7 @@ class ASO(object):
 class RuleSet(ASO):
     def __init__(self, n):
         self.name = n
+        self.codename = name_to_identifier(n)
         self.initial_assignments = [Assignment('s', None), Assignment('l', None)]
         self.rule_elements = []
 
@@ -82,7 +86,7 @@ class RuleSet(ASO):
         yield('\n')
         yield(INDENT * level)
         yield('def __')
-        yield(self.name)
+        yield(self.codename)
         yield('(dt):')
         for a in self.initial_assignments:
             for x in a.render(level + 1):
@@ -242,6 +246,7 @@ def compile(rules):
                     try:
                         f_name, d = re.match(r'( ?[a-zA-Z<>=]+)(\d+)', rule['on']).groups()
                         d = int(d)
+                        f_name = f_name.strip()
                     except Exception:
                         raise CompileError("Problem extracting day from %r" % (rule['on'],))
                     f_name = f_name.replace('>', 'Gt')
