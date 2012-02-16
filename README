@@ -5,5 +5,5 @@ provided by IANA here:
 http://www.iana.org/time-zones
 
 KNOWN ISSUES:
-Rules are inconsistantly provided in local and UTC times, which means that they
-may be inaccurate for a few hours around changes.
+A few rules are inconsistantly provided in UTC times, which means that they may
+be inaccurate for a few hours around changes.

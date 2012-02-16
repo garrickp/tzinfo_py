@@ -179,7 +179,8 @@ def _rule_constant_20min(dt):
 def write_zonefile(name, rulesets, zonesets, linksets):
     with open("zoneinfo.py", 'w') as outf:
         outf.write('"""\n')
-        outf.write("generated %s %s file\n" % (name, PKG_NAME))
+        outf.write("generated %s file\n\n" % (PKG_NAME,))
+        outf.write("Generated from: %s\n" % (GENERATOR_URL,))
         outf.write(license)
         outf.write('"""\n\n')
         outf.write('from datetime import tzinfo, datetime, timedelta\n')
