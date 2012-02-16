@@ -28,8 +28,9 @@ from datetime import datetime
 import re
 
 LAST_ZONE_SENT = '__last_processed_zone__'
-zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_+\-]+)\s+([\d:-]+)\s([\w-]+)\s"?(.+)"?\s?(.+)?$')
-zone_cont_re = re.compile(r'\A( ?[\d:-]+)\s(.+)\s(.+)\s?(.+)?$')
+zone_re = re.compile(r'\A(Zone)\s([a-zA-Z0-9/_+-]+)\s+(-?\d{1,2}:?\d{0,2}:?\d{0,2})\s(-|[a-zA-Z0-9/_+\-]+)\s+(".*"|[\w+%-]+)\s?(\d{4} ?\w{0,3} *\d{0,2} *\d{0,2}:?\d{0,2}:?\d{0,2}[us]?)?$')
+			#-5:00	US	E%sT	1920
+zone_cont_re = re.compile(r'\A\s*(-?\d{1,2}:?\d{0,2}:?\d{0,2})\s*(\d:\d\d|-|[a-zA-Z0-9/_+\-]+)?\s(".*"|[\w+%/-]+)\s?(\d{4} ?\w{0,3} *[0-9a-zA-Z>=]* *\d{0,2}:?\d{0,2}:?\d{0,2}[us]?)?$')
 link_re = re.compile(r'\A(Link)\s([a-zA-Z0-9/_+\-]+)\s+([a-zA-Z0-9/_+\-]+)$')
 rule_re = re.compile(r'\A(Rule)\s([\w-]+)\s(\d+|min)\s(\d{4}|max|only)\s(.+)\s(\w+)\s(.+)\s([\w:-]+)\s([\w:-]+)\s([\w-]+)$')
 

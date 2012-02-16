@@ -111,21 +111,29 @@ class Zone(ASO):
         yield(INDENT * level)
         yield('def __from_rules(self, dt):')
         level += 1
-        for x in ('offset','rule','save','format','letter'):
+        for x in ('rule','format','letter'):
             yield('\n')
             yield(INDENT * level)
             yield(x)
             yield(' = None')
+        for x in ('offset', 'save'):
+            yield('\n')
+            yield(INDENT * level)
+            yield(x)
+            yield(' = timedelta()')
+        yield('\n')
+        yield(INDENT * level)
+        yield('dtt = (dt.year, dt.month, dt.day, dt.hour, dt.minute)')
         first = True
         for o in self.offsets:
             for x in o.render(level, first):
                 yield(x)
             first = False
         for line in ["if rule is not None:",
-                     "    save, letter = rule()",
+                     "    save, letter = rule(dt)",
                      "if offset is not None and save is not None:",
                      "    offset = offset - save",
-                     "if format is not None and letter is not None:",
+                     "if format is not None and letter is not None and '%' in format:",
                      "    format = format % letter",
                      "return offset, save, format"]:
             yield('\n')
@@ -134,10 +142,10 @@ class Zone(ASO):
         level -= 1
         for line in ["def utcoffset(self, dt):",
                      "    offset, _, _ = self.__from_rules(dt)",
-                     "    return offset.total_seconds // 60",
+                     "    return offset",
                      "def dst(self, dt):",
                      "    _, save, _ = self.__from_rules(dt)",
-                     "    return 0 - (save.total_seconds // 60)",
+                     "    return save",
                      "def tzname(self, dt):",
                      "    _, _, format = self.__from_rules(dt)",
                      "    return format"]:
@@ -161,6 +169,7 @@ class Offset(ASO):
             for x in self.condition.render(level):
                 yield(x)
             yield(':')
+            level += 1
         else:
             if not first:
                 yield('\n')
@@ -259,11 +268,11 @@ def compile(zones):
             o_obj = Offset()
 
             try:
-                gmt_off = re.match(r'(-)?(\d+):?(\d+)?:?(\d+)?', offset['gmtoff']).groups()
+                gmt_off = re.match(r'( ?-?)?(\d+):?(\d+)?:?(\d+)?', offset['gmtoff']).groups()
             except AttributeError:
                 raise CompileError("Error parsing gmtoff: %r" % (offset['gmtoff'],))
 
-            neg = bool(gmt_off[0])
+            neg = gmt_off[0] == '-'
             hours = int(gmt_off[1])
             mins = int(gmt_off[2]) if gmt_off[2] else 0
             secs = int(gmt_off[3]) if gmt_off[3] else 0
@@ -278,10 +287,14 @@ def compile(zones):
 
             # Get and set up rule assignment
             rule = offset['rules']
-            if not rule or rule == '-':
+            if not rule or rule.strip() == '-':
                 rule_name = None
+            elif re.match(r'\d{1,2}:?\d{0,2}:?\d{0,2}', rule):
+                rule_name = {'1:00': '_rule_constant_1hour',
+                             '0:30': '_rule_constant_30min',
+                             '0:20': '_rule_constant_20min'}[rule.strip()]
             else:
-                rule_name = '__' + name_to_identifier(rule)
+                rule_name = '_' + name_to_identifier(rule)
 
             o_obj.assignments.append(Assignment('rule', Identifier(rule_name)))
 
@@ -292,8 +305,8 @@ def compile(zones):
 
             # Get and set up the condition
             if offset['until']:
-                # XXX These times appear to be local in the file, which could
-                #     wreak all sorts of havok with conversions. Fix this!
+                # TODO These times appear to be local in the file, which could
+                #      wreak all sorts of havok with conversions. Fix this!
                 try:
                     u_parts = re.match(r'(\d{4}) ?(\w{3})? ?(\d+)? ?(\d+)?:?(\d+)?',
                                        offset['until']).groups()
@@ -302,7 +315,7 @@ def compile(zones):
 
                 u_year = int(u_parts[0])
                 u_mon = u_parts[1]
-                u_day = int(u_parts[2]) if u_parts[2] else 0
+                u_day = int(u_parts[2]) if u_parts[2] else 1
                 u_hour = int(u_parts[3]) if u_parts[3] else 0
                 u_mins = int(u_parts[4]) if u_parts[4] else 0
 
@@ -311,10 +324,9 @@ def compile(zones):
                 except ValueError:
                     raise CompileError("Not able to index month %r" % (rule['in'],))
 
-                comp = Condition('dt', '<=', FuncCall('datetime', u_year, u_mon_i,
-                                                      u_day, u_hour, u_mins))
+                comp = Condition('dtt', '<', Identifier('(%s,%s,%s,%s,%s)' % (u_year, u_mon_i, u_day, u_hour, u_mins)))
 
                 o_obj.condition = comp
-        z_obj.offsets.append(o_obj)
+            z_obj.offsets.append(o_obj)
         all_zones[name] = z_obj
     return all_zones

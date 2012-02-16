@@ -46,13 +46,12 @@ zoneinfo_files = ["africa",
                   "factory",
                   "northamerica",
                   "pacificnew",
-                  "solar87",
-                  "solar88",
-                  "solar89",
+                  #"solar87",
+                  #"solar88",
+                  #"solar89",
                   "southamerica",
-                  "systemv",
+                  #"systemv",
                  ]
-na_file = "/home/garrickp/Downloads/tzdata2011n/northamerica" # XXX
 
 def main(zoneinfo_data_path):
     if not os.path.exists(zoneinfo_data_path):

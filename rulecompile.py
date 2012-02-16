@@ -79,13 +79,14 @@ class RuleSet(ASO):
     def __init__(self, n):
         self.name = n
         self.codename = name_to_identifier(n)
-        self.initial_assignments = [Assignment('s', None), Assignment('l', None)]
+        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', ''),
+                Assignment('dtt', Identifier('(dt.year, dt.month, dt.day, dt.hour, dt.minute)'))]
         self.rule_elements = []
 
     def render(self, level=0):
         yield('\n')
         yield(INDENT * level)
-        yield('def __')
+        yield('def _')
         yield(self.codename)
         yield('(dt):')
         for a in self.initial_assignments:
@@ -240,7 +241,8 @@ def compile(rules):
                 raise CompileError("unable to turn %r to hours:minutes" % (rule['at'],))
 
             if on_day:
-                f_call = FuncCall('datetime', Identifier('dt.year'), in_mo, on_day, int(at_hour), int(at_min))
+                f_call = Identifier('(dt.year, %s, %s, %s, %s)' % (in_mo, on_day, int(at_hour), int(at_min)))
+                #f_call = FuncCall('datetime', Identifier('dt.year'), in_mo, on_day, int(at_hour), int(at_min))
             else:
                 if any([x in rule['on'] for x in ('=','>','<')]):
                     try:
@@ -255,7 +257,7 @@ def compile(rules):
                     f_call = FuncCall('__' + f_name, Identifier('dt.year'), in_mo, d, int(at_hour), int(at_min))
                 else:
                     f_call = FuncCall('__' + rule['on'], Identifier('dt.year'), in_mo, int(at_hour), int(at_min))
-            r_ele.conditions.append(Condition('dt', '>=', f_call))
+            r_ele.conditions.append(Condition('dtt', '>=', f_call))
 
             r_ele.assignments.append(Assignment('l', "%s" % (rule['letter'],)))
             try:
