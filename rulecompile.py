@@ -79,7 +79,7 @@ class RuleSet(ASO):
     def __init__(self, n):
         self.name = n
         self.codename = name_to_identifier(n)
-        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', ''),
+        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', 'S'),
                 Assignment('dtt', Identifier('(dt.year, dt.month, dt.day, dt.hour, dt.minute)'))]
         self.rule_elements = []
 
