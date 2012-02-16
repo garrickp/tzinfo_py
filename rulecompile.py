@@ -267,7 +267,8 @@ def compile(rules):
                 neg = bool(off_h_m_s[0])
                 h = int(off_h_m_s[1])
                 m = int(off_h_m_s[2]) if off_h_m_s[2] else 0
-                s = int(off_h_m_s[3]) if off_h_m_s[3] else 0
+                s = 0
+                #s = int(off_h_m_s[3]) if off_h_m_s[3] else 0
             except AttributeError:
                 raise CompileError("unable to convert save: %r" % (rule['save'],))
             if neg:

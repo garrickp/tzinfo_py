@@ -123,7 +123,20 @@ class Zone(ASO):
             yield(' = timedelta()')
         yield('\n')
         yield(INDENT * level)
+        yield('if dt:')
+        level += 1
+        yield('\n')
+        yield(INDENT * level)
         yield('dt = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)')
+        level -= 1
+        yield('\n')
+        yield(INDENT * level)
+        yield('else:')
+        level += 1
+        yield('\n')
+        yield(INDENT * level)
+        yield('dt = datetime.now()')
+        level -= 1
         first = True
         for o in self.offsets:
             for x in o.render(level, first):
@@ -275,7 +288,8 @@ def compile(zones):
             neg = gmt_off[0] == '-'
             hours = int(gmt_off[1])
             mins = int(gmt_off[2]) if gmt_off[2] else 0
-            secs = int(gmt_off[3]) if gmt_off[3] else 0
+            secs = 0
+            #secs = int(gmt_off[3]) if gmt_off[3] else 0
 
             if neg:
                 hours = -hours
