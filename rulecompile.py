@@ -79,8 +79,7 @@ class RuleSet(ASO):
     def __init__(self, n):
         self.name = n
         self.codename = name_to_identifier(n)
-        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', 'S'),
-                Assignment('dtt', Identifier('(dt.year, dt.month, dt.day, dt.hour, dt.minute)'))]
+        self.initial_assignments = [Assignment('s', FuncCall('timedelta')), Assignment('l', 'S')]
         self.rule_elements = []
 
     def render(self, level=0):
@@ -240,9 +239,12 @@ def compile(rules):
             except AttributeError:
                 raise CompileError("unable to turn %r to hours:minutes" % (rule['at'],))
 
+            # Fix for Jordan Rule:
+            if at_hour >= 24:
+                at_hour = 24 - at_hour
+
             if on_day:
-                f_call = Identifier('(dt.year, %s, %s, %s, %s)' % (in_mo, on_day, int(at_hour), int(at_min)))
-                #f_call = FuncCall('datetime', Identifier('dt.year'), in_mo, on_day, int(at_hour), int(at_min))
+                f_call = FuncCall('datetime', Identifier('dt.year'), in_mo, on_day, int(at_hour), int(at_min))
             else:
                 if any([x in rule['on'] for x in ('=','>','<')]):
                     try:
@@ -257,7 +259,7 @@ def compile(rules):
                     f_call = FuncCall('__' + f_name, Identifier('dt.year'), in_mo, d, int(at_hour), int(at_min))
                 else:
                     f_call = FuncCall('__' + rule['on'], Identifier('dt.year'), in_mo, int(at_hour), int(at_min))
-            r_ele.conditions.append(Condition('dtt', '>=', f_call))
+            r_ele.conditions.append(Condition('dt', '>=', Identifier(''.join(f_call.render()))))
 
             r_ele.assignments.append(Assignment('l', "%s" % (rule['letter'],)))
             try:

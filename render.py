@@ -57,114 +57,114 @@ def __lastSun(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
-        day = w[0]
+        day = w[6]
         if day != 0:
             break
-    return (year, month, day, hour, min)
+    return datetime(year, month, day, hour, min)
 def __lastSat(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
-        day = w[6]
-        if day != 0:
-            break
-    return (year, month, day, hour, min)
-def __lastFri(year, month, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in reversed(c):
         day = w[5]
         if day != 0:
             break
-    return (year, month, day, hour, min)
-def __lastThu(year, month, hour, min):
+    return datetime(year, month, day, hour, min)
+def __lastFri(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
         day = w[4]
         if day != 0:
             break
-    return (year, month, day, hour, min)
-def __lastWed(year, month, hour, min):
+    return datetime(year, month, day, hour, min)
+def __lastThu(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
         day = w[3]
         if day != 0:
             break
-    return (year, month, day, hour, min)
-def __lastTue(year, month, hour, min):
+    return datetime(year, month, day, hour, min)
+def __lastWed(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
         day = w[2]
         if day != 0:
             break
-    return (year, month, day, hour, min)
-def __lastMon(year, month, hour, min):
+    return datetime(year, month, day, hour, min)
+def __lastTue(year, month, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in reversed(c):
         day = w[1]
         if day != 0:
             break
-    return (year, month, day, hour, min)
+    return datetime(year, month, day, hour, min)
+def __lastMon(year, month, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in reversed(c):
+        day = w[0]
+        if day != 0:
+            break
+    return datetime(year, month, day, hour, min)
 def __SunGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[6]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __SatGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[5]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __FriGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[4]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __ThuGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[3]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __WedGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[2]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __TueGtEq(year, month, min_day, hour, min):
+    c = Calendar().monthdayscalendar(year, month)
+    day = 0
+    for w in c:
+        day = w[1]
+        if day >= min_day:
+            break
+    return datetime(year, month, day, hour, min)
+def __MonGtEq(year, month, min_day, hour, min):
     c = Calendar().monthdayscalendar(year, month)
     day = 0
     for w in c:
         day = w[0]
         if day >= min_day:
             break
-    return (year, month, day, hour, min)
-def __SatGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[6]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
-def __FriGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[5]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
-def __ThuGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[4]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
-def __WedGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[3]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
-def __TueGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[2]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
-def __MonGtEq(year, month, min_day, hour, min):
-    c = Calendar().monthdayscalendar(year, month)
-    day = 0
-    for w in c:
-        day = w[1]
-        if day >= min_day:
-            break
-    return (year, month, day, hour, min)
+    return datetime(year, month, day, hour, min)
 
 # Constant rules
 def _rule_constant_1hour(dt):

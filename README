@@ -3,3 +3,7 @@ objects for most major timezones. The data source is the zoneinfo database
 provided by IANA here:
 
 http://www.iana.org/time-zones
+
+KNOWN ISSUES:
+Rules are inconsistantly provided in local and UTC times, which means that they
+may be inaccurate for a few hours around changes.

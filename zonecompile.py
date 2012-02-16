@@ -123,7 +123,7 @@ class Zone(ASO):
             yield(' = timedelta()')
         yield('\n')
         yield(INDENT * level)
-        yield('dtt = (dt.year, dt.month, dt.day, dt.hour, dt.minute)')
+        yield('dt = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)')
         first = True
         for o in self.offsets:
             for x in o.render(level, first):
@@ -320,11 +320,11 @@ def compile(zones):
                 u_mins = int(u_parts[4]) if u_parts[4] else 0
 
                 try:
-                    u_mon_i = MONTHS.index(u_mon) if u_mon else 0
+                    u_mon_i = MONTHS.index(u_mon) + 1 if u_mon else 1
                 except ValueError:
                     raise CompileError("Not able to index month %r" % (rule['in'],))
 
-                comp = Condition('dtt', '<', Identifier('(%s,%s,%s,%s,%s)' % (u_year, u_mon_i, u_day, u_hour, u_mins)))
+                comp = Condition('dt', '<', Identifier('datetime(%s,%s,%s,%s,%s)' % (u_year, u_mon_i, u_day, u_hour, u_mins)))
 
                 o_obj.condition = comp
             z_obj.offsets.append(o_obj)
