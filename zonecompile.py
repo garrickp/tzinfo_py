@@ -67,7 +67,7 @@ import re
 #         if rule is not None:
 #             save, letter = rule()
 #         if offset is not None and save is not None:
-#             offset = offset - save
+#             offset = offset + save
 #         if format is not None and letter is not None:
 #             format = format % letter
 #         return offset, save, format
