@@ -1,3 +1,9 @@
+## Notice ##
+This project is, in my eyes, abandoned. I did it for fun several years back,
+but it does not stack up against other timezone libraries, and I have abandoned
+it. Use at your own risk!
+
+
 A python tool for automatically generating a module containing datetime.tzinfo
 objects for most major timezones. The data source is the zoneinfo database
 provided by IANA here:
